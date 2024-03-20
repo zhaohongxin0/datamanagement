@@ -140,6 +140,8 @@ update_variables_server <- function(id, data, height = NULL) {
       })
 
       observeEvent(input$validate, {
+         withProgress(message = "设置中，请耐心等待 ...", {
+            incProgress(0.4)
         updated_data$list_rename <- NULL
         updated_data$list_select <- NULL
         data <- data_r()
@@ -190,7 +192,7 @@ update_variables_server <- function(id, data, height = NULL) {
           updated_data$list_rename <- list_rename
           updated_data$list_select <- list_select
         }
-
+})
       })
 
       return(reactive({

@@ -106,6 +106,8 @@ update_variables_server <- function(id, data, height = NULL) {
       token <- reactiveValues(x = genId())
 
       data_r <- reactive({
+        withProgress(message = "读取数据，请稍等 ...", {
+          incProgress(0.4)
         if (is.reactive(data)) {
           token$x <- genId()
           data()
@@ -113,14 +115,18 @@ update_variables_server <- function(id, data, height = NULL) {
           data
         }
       })
-
+      })
       output$data_info <- renderUI({
         shiny::req(data_r())
+        withProgress(message = "读取数据，请稍等 ...", {
+          incProgress(0.4)
         data <- data_r()
         sprintf(i18n("Data has %s observations and %s variables."), nrow(data), ncol(data))
       })
-
+      })
       variables_r <- reactive({
+        withProgress(message = "读取数据，请稍等 ...", {
+          incProgress(0.4)
         shiny::validate(
           shiny::need(data(), i18n("No data to display."))
         )
@@ -128,9 +134,11 @@ update_variables_server <- function(id, data, height = NULL) {
         updated_data$x <- NULL
         summary_vars(data)
       })
-
+      })
       output$table <- reactable::renderReactable({
         req(variables_r())
+        withProgress(message = "读取数据，请稍等 ...", {
+          incProgress(0.4)
         tok <- isolate(token$x)
         variables <- variables_r()
         # variables <- set_input_checkbox(variables, ns(paste("selection", tok, sep = "-")))
@@ -138,10 +146,13 @@ update_variables_server <- function(id, data, height = NULL) {
         variables <- set_input_class(variables, "class", ns(paste("class_to_set", tok, sep = "-")))
         update_variables_reactable(variables, height = height, elementId = ns("table"))
       })
+      })
 
       observeEvent(input$validate, {
-         withProgress(message = "设置中，请耐心等待 ...", {
-            incProgress(0.4)
+
+        withProgress(message = "读取数据，请稍等 ...", {
+          incProgress(0.4)
+
         updated_data$list_rename <- NULL
         updated_data$list_select <- NULL
         data <- data_r()
@@ -149,6 +160,7 @@ update_variables_server <- function(id, data, height = NULL) {
         new_selections <- reactable::getReactableState("table", "selected")
         new_names <- get_inputs(paste("name", tok, sep = "-"))
         new_classes <- get_inputs(paste("class_to_set", tok, sep = "-"))
+
 
         data_sv <- variables_r()
         vars_to_change <- get_vars_to_convert(data_sv, new_classes)
@@ -165,6 +177,7 @@ update_variables_server <- function(id, data, height = NULL) {
               dec = input$dec
             )
           }
+
 
           # rename
           list_rename <- setNames(
@@ -192,10 +205,13 @@ update_variables_server <- function(id, data, height = NULL) {
           updated_data$list_rename <- list_rename
           updated_data$list_select <- list_select
         }
-})
+
+        })
       })
 
       return(reactive({
+        withProgress(message = "读取数据，请稍等再操作 ...", {
+          incProgress(0.4)
         data <- updated_data$x
         if (!is.null(data) && isTruthy(updated_data$list_rename) && length(updated_data$list_rename) > 0) {
           attr(data, "code_01_rename") <- call2("rename", !!!updated_data$list_rename)
@@ -204,6 +220,7 @@ update_variables_server <- function(id, data, height = NULL) {
           attr(data, "code_02_select") <- expr(select(-any_of(c(!!!updated_data$list_select))))
         }
         return(data)
+        })
       }))
     }
   )
@@ -438,18 +455,18 @@ set_input_class <- function(data, variable, id = "classes", width = "100%") {
 
 update_variables_reactable <- function(data, height = NULL, elementId = NULL) {
   if (is.null(height)) {
-    height <- if (NROW(data) > 8) "400px" else "auto"
+    height <- if (NROW(data) > 8) "300px" else "auto"
   }
   tble <- reactable::reactable(
     data = data,
     defaultColDef = reactable::colDef(html = TRUE),
     columns = list(
-      name = reactable::colDef(name = "Name"),
-      class = reactable::colDef(name = "Class"),
-      class_toset = reactable::colDef(name = "New class"),
-      n_missing = reactable::colDef(name = "Missing values"),
-      p_complete = reactable::colDef(name = "Complete obs.", format = reactable::colFormat(percent = TRUE, digits = 1)),
-      n_unique = reactable::colDef(name = "Unique values")
+      name = reactable::colDef(name = "变量名"),
+      class = reactable::colDef(name = "变量原属性"),
+      class_toset = reactable::colDef(name = "设置变量新属性"),
+      n_missing = reactable::colDef(name = "缺失数据"),
+      p_complete = reactable::colDef(name = "数据完整率", format = reactable::colFormat(percent = TRUE, digits = 1)),
+      n_unique = reactable::colDef(name = "不重复值的个数")
     ),
     height = height,
     selection = "multiple",

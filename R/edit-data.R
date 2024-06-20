@@ -170,10 +170,10 @@ edit_data_server <- function(id,
         }
 
         if (isTRUE(delete)) {
-        data[, .datamods_edit_delete := as.character(seq_len(.N))]
-        data[, .datamods_edit_delete := list(
-          lapply(.datamods_edit_delete, btn_delete(ns("delete")))
-        )]
+          data[, .datamods_edit_delete := as.character(seq_len(.N))]
+          data[, .datamods_edit_delete := list(
+            lapply(.datamods_edit_delete, btn_delete(ns("delete")))
+          )]
         } else {
           data[, .datamods_edit_delete := NA]
         }
@@ -186,6 +186,8 @@ edit_data_server <- function(id,
       # Table ---
       output$table <- renderReactable({
         data <- req(data_init_r())
+        if (is.reactive(reactable_options))
+          reactable_options <- reactable_options()
         table_display(
           data = data,
           colnames = data_rv$colnames,
@@ -520,4 +522,3 @@ edit_data_server <- function(id,
     }
   )
 }
-
